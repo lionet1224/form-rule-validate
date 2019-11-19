@@ -5,13 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
-  <script src="../dist/rule.min.js"></script>
+  <script src="../dist/rule.js"></script>
 </head>
 <body>
 
   <form id="test" action="#">
     <div class="form-item">
-      <input name="number" l-validate="required|max:1|max:5|number" type="text">
+      <input name="number" 
+        l-validate=
+          "required
+          |max:1
+          |max:5
+          |number
+          |string
+          |object
+          |ajax:get
+          |url:http://www.baidu.com
+          |field:user.u
+          |include:[1,3,4,5,6,7]
+          "
+        type="text"
+      >
       <p>error info</p>
     </div>
     <button type="submit">Submit</button>
@@ -19,17 +33,27 @@
 
   <script>
     // 创建一个表单验证, 将会获取其中存在l-validate的元素的value是否符合规则
+    // 第二个参数为是否需要禁用表单提交事件，默认为true，如果为false的话，所有数据的格式正确的话就会正常提交
     let rule = new Rule('#test');
+
+    rule.create('object', val => {
+      if(val[0] == '{' && val[val.length - 1] == '}'){
+        return true
+      }
+    });
+
     // 判断当前的值是否正确
     if(!rule.passes()){
-      // 为错误，所有的错误值
+      // 若为错误，所有的错误值
       console.log(rule.errors({
-        info: 'p' // 在父级之下的所有元素中找到这个元素，将对应的错误信息写入，并且将其显示
+        fn(elem, errors){
+          // 自定义处理这个元素的错误
+        }
       }));
     }
-    // 获取l-validate所有的值
+    // 获取所有l-validate元素的值
     rule.get();
-    // 获取name=number的值
+    // 获取元素拥有name=number的值
     rule.get('number')
   </script>
 </body>

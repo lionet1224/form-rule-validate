@@ -4,8 +4,7 @@
   "description": "快速处理表单数据",
   "main": "dist/lionet-rule.js",
   "scripts": {
-    "dev": "babel src/ -o dist/rule.js",
-    "build": "npm run dev && webpack --mode=production",
+    "build": "babel src/ -w --modules umd -o dist/rule.js",
     "clean": "rm -rf dist",
     "test": ""
   },
@@ -17,7 +16,6 @@
   "license": "MIT",
   "devDependencies": {
     "babel": "^5.8.38",
-    "babel-core": "^5.8.38",
-    "webpack-cli": "^3.3.10"
+    "babel-core": "^5.8.38"
   }
 }

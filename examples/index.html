@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="../dist/rule.min.js"></script>
+</head>
+<body>
+
+  <form id="test" action="#">
+    <div class="form-item">
+      <input name="number" l-validate="required|max:1|max:5|number" type="text">
+      <p>error info</p>
+    </div>
+    <button type="submit">Submit</button>
+  </form>
+
+  <script>
+    // 创建一个表单验证, 将会获取其中存在l-validate的元素的value是否符合规则
+    let rule = new Rule('#test');
+    // 判断当前的值是否正确
+    if(!rule.passes()){
+      // 为错误，所有的错误值
+      console.log(rule.errors({
+        info: 'p' // 在父级之下的所有元素中找到这个元素，将对应的错误信息写入，并且将其显示
+      }));
+    }
+    // 获取l-validate所有的值
+    rule.get();
+    // 获取name=number的值
+    rule.get('number')
+  </script>
+</body>
+</html>

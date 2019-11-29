@@ -9,7 +9,7 @@
 </head>
 <body>
 
-  <form id="test" action="#">
+  <form id="test" method="get" action="#">
     <div class="form-item">
       <input name="number" 
         l-validate=
@@ -17,7 +17,6 @@
           |max:1
           |max:5
           |number
-          |string
           |object
           |ajax:get
           |url:http://www.baidu.com
@@ -26,35 +25,53 @@
           "
         type="text"
       >
+      <input type="number" name="test" l-validate="required|number">
+      <!-- 匹配相同密码 -->
+      <input type="password" name="password" l-validate="required">
+      <!-- 确认密码 -->
+      <input type="password" name="dbpassword" l-validate="required|dbpassword">
       <p>error info</p>
     </div>
     <button type="submit">Submit</button>
   </form>
 
   <script>
+    console.time('time test')
     // 创建一个表单验证, 将会获取其中存在l-validate的元素的value是否符合规则
     // 第二个参数为是否需要禁用表单提交事件，默认为true，如果为false的话，所有数据的格式正确的话就会正常提交
-    let rule = new Rule('#test');
+    let rule = new Rule('#test', true);
 
-    rule.create('object', val => {
-      if(val[0] == '{' && val[val.length - 1] == '}'){
-        return true
-      }
-    });
+    // 这样可以修改错误信息
+    rule.validator.validates['required'].errorInfo = '值不能为空';
+    // 这样也可以
+    rule.validator.setErrorInfo('required', '值不能为空');
 
+    // 创建一条新的规则
+    // rule.validator.create('object', val => {
+    //   if(val[0] == '{' && val[val.length - 1] == '}'){
+    //     return true
+    //   }
+    // });
+
+    // 比如我想要一个匹配相同密码
+    rule.validator.create('dbpassword|确认密码不匹配', val => {
+      // 在这里我想要获取password的值
+      let password = rule.get('password');
+      if(val === password) return true;
+    },)
+
+    // 验证后
     // 判断当前的值是否正确
-    if(!rule.passes()){
-      // 若为错误，所有的错误值
-      console.log(rule.errors({
-        fn(elem, errors){
-          // 自定义处理这个元素的错误
-        }
-      }));
-    }
-    // 获取所有l-validate元素的值
-    rule.get();
-    // 获取元素拥有name=number的值
-    rule.get('number')
-  </script>
+    rule.submit(errors => {
+      // 错误信息
+      // console.log(errors)
+      // 获取所有l-validate元素的值
+      // console.log(rule.get());
+      // 获取元素拥有name=number的值
+      // console.log(rule.get('number'))
+    })
+
+    console.timeEnd('time test')
+</script>
 </body>
 </html>

@@ -51,6 +51,12 @@
 </html>
 ```
 
+在`l-validate`中编写验证规则，每个规则以管道符分隔，`:`之后的数据为参数，可以在验证规则中获取。
+
+默认拥有的规则有: `require`/`filled`/`min:*`/`max:*`/`number`/`include`/`dbpassword`
+
+具体的功能在下面介绍。
+
 
 
 # 创建新规则
@@ -66,4 +72,54 @@ rule.validator.create('key:value1,value2,value3|errorInfo {{value1}} {{value2}}'
     // 在这里里面验证，返回true就是通过
 });
 ```
+
+
+
+# 所有方法介绍
+
+## 创建实例
+
+`new Rule(elem, [flag])`
+
+创建`Rule`实例有两个参数, 第一个为元素的选择器，第二个为布尔值，默认为false。
+
+flag:
+
+* true 表单禁止提交，用于ajax提交
+* flase 表单数据正确将自动提交
+
+
+
+实例上的方法有:
+
+* `get([string])` 提交后，获取字段数据，如果有参数就为单独获取字段`name='string'`的数据
+* `setErrorInfo(key, errorInfo)` 关联到验证器的这个方法，具体可以看下面
+* `submit(fn)` 表单提交后的回调函数，回调函数会给一个`errors`参数，为提交后的所有错误信息
+
+
+
+## 验证器
+
+实例上有一个验证器`validator`，通过`rule.validator`调用，验证器用于保存规则，修改规则。
+
+规则器方法有`create`/`setErrorInfo`
+
+* `create(key, callback)` 用于创建规则，key可以通过`|`分隔创建名称以及错误信息，示例: `test|this is a test`，key还可以给`l-validate`中的参数定义名称`test:value`，这样就可以在错误信息中，通过`{{value}}`来动态修改错误信息。
+* `setErrorInfo(key, info)` 修改已有规则的错误信息
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

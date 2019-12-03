@@ -350,6 +350,10 @@
     }, {
       key: 'setErrorInfo',
       value: function setErrorInfo(key, info) {
+        if (!this.validates[key]) {
+          console.error('update ' + name + ' fail, this a validate exists');
+          return;
+        }
         this.validates[key].errorInfo = info;
       }
     }]);

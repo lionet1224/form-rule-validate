@@ -256,6 +256,10 @@ class Validator{
    * @param {string} info 错误信息
    */
   setErrorInfo(key, info){
+    if(!this.validates[key]) {
+      console.error(`update ${name} fail, this a validate exists`);
+      return;
+    }
     this.validates[key].errorInfo = info;
   }
 }

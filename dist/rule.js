@@ -108,19 +108,27 @@
             var name = field.validate[i];
             var f = _this3.validator.validates[name[0]];
             if (f) {
-              var v = f.fn.apply(_this3, [field.$dom.value].concat(_toConsumableArray(name[1])));
+              var v = undefined;
+              if (f.flag) {
+                v = f.fn.apply(_this3, [field.$dom.value, field].concat(_toConsumableArray(name[1])));
+              } else {
+                v = f.fn.apply(_this3, [field.$dom.value].concat(_toConsumableArray(name[1])));
+              }
               if (!v) {
-                !errors[field.name] && (errors[field.name] = []);
-                if (name[1].length) {
-                  if (f.argvs[0] == '*') {
-                    f.errorInfo = f.errorInfo.replace('{{*}}', name[1].join(','));
-                  } else {
-                    name[1].map(function (item, i) {
-                      f.errorInfo = f.errorInfo.replace('{{' + f.argvs[i] + '}}', item);
-                    });
+                (function () {
+                  !errors[field.name] && (errors[field.name] = []);
+                  var info = f.errorInfo;
+                  if (name[1].length) {
+                    if (f.argvs[0] == '*') {
+                      info = info.replace('{{*}}', name[1].join(','));
+                    } else {
+                      name[1].map(function (item, i) {
+                        info = info.replace('{{' + f.argvs[i] + '}}', item);
+                      });
+                    }
                   }
-                }
-                errors[field.name].push(f.errorInfo || "no error info");
+                  errors[field.name].push(info || "no error info");
+                })();
               }
             }
           };
@@ -177,7 +185,7 @@
         if (key) {
           return this.data[key].$dom.value;
         } else {
-          var _ret2 = (function () {
+          var _ret3 = (function () {
             var data = {};
             Object.keys(_this4.data).map(function (key) {
               data[key] = _this4.data[key].$dom.value;
@@ -187,7 +195,7 @@
             };
           })();
 
-          if (typeof _ret2 === 'object') return _ret2.v;
+          if (typeof _ret3 === 'object') return _ret3.v;
         }
       }
     }]);
@@ -210,11 +218,27 @@
      */
 
     /**
-     * 解析l-validate里面的规则
-     * @param {string} v 规则字符串
+     * 获取验证规则
+     * @param {string} 规则key
      */
 
     _createClass(Field, [{
+      key: 'getValidate',
+      value: function getValidate(key) {
+        return this.validate.filter(function (i) {
+          if (key) {
+            if (i[0] == key) return true;
+          } else true;
+        }).map(function (i) {
+          return i[0];
+        });
+      }
+
+      /**
+       * 解析l-validate里面的规则
+       * @param {string} v 规则字符串
+       */
+    }, {
       key: 'loadValidate',
       value: function loadValidate(v) {
         var arr = v.split('|').map(function (item) {
@@ -268,15 +292,19 @@
           return false;
         });
         // 字符串最大的长度
-        this.create('max:num|Value length max - {{num}}', function (val, num) {
-          if (val.length <= num) return true;
+        this.create('max:num|Value max - {{num}}', function (val, field, num) {
+          if (field.getValidate('number').length) {
+            if (parseFloat(val) <= parseFloat(num)) return true;
+          } else if (val.length <= num) return true;
           return false;
-        });
+        }, true);
         // 字符串最小的长度
-        this.create('min:num|Value length min - {{num}}', function (val, num) {
-          if (val.length >= num) return true;
+        this.create('min:num|Value min - {{num}}', function (val, field, num) {
+          if (field.getValidate('number').length && parseFloat(val) >= parseFloat(num)) {
+            return true;
+          } else if (val.length >= num) return true;
           return false;
-        });
+        }, true);
         // 是否包含
         this.create('include:*|Value exists {{*}}', function (val) {
           for (var _len = arguments.length, arr = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
@@ -303,6 +331,8 @@
     }, {
       key: 'create',
       value: function create(key, fn) {
+        var flag = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+
         if (!key) {
           console.error("rule name dont't exists");
           return;
@@ -338,7 +368,8 @@
         this.validates[name] = {
           errorInfo: errorInfo,
           fn: fn,
-          argvs: argvs
+          argvs: argvs,
+          flag: flag
         };
       }
 

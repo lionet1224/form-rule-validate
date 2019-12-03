@@ -63,19 +63,25 @@ class Rule{
         let name = field.validate[i];
         let f = this.validator.validates[name[0]];
         if(f){
-          let v = f.fn.apply(this, [field.$dom.value, ...name[1]]);
+          let v;
+          if(f.flag){
+            v = f.fn.apply(this, [field.$dom.value, field, ...name[1]]);
+          } else {
+            v = f.fn.apply(this, [field.$dom.value, ...name[1]]);
+          }
           if(!v){
             !errors[field.name] && (errors[field.name] = []);
+            let info = f.errorInfo;
             if(name[1].length){
               if(f.argvs[0] == '*'){
-                f.errorInfo = f.errorInfo.replace('{{*}}', name[1].join(','));
+                info = info.replace('{{*}}', name[1].join(','));
               } else {
                 name[1].map((item, i) => {
-                  f.errorInfo = f.errorInfo.replace(`{{${f.argvs[i]}}}`, item);
+                  info = info.replace(`{{${f.argvs[i]}}}`, item);
                 })
               }
             }
-            errors[field.name].push(f.errorInfo || "no error info");
+            errors[field.name].push(info || "no error info");
           }
         }
       }
@@ -139,6 +145,18 @@ class Field{
   }
 
   /**
+   * 获取验证规则
+   * @param {string} 规则key
+   */
+  getValidate(key){
+    return this.validate.filter(i => {
+      if(key){
+        if(i[0] == key) return true;
+      } else true;
+    }).map(i => i[0]);
+  }
+
+  /**
    * 解析l-validate里面的规则
    * @param {string} v 规则字符串
    */
@@ -185,15 +203,19 @@ class Validator{
       return false;
     })
     // 字符串最大的长度
-    this.create('max:num|Value length max - {{num}}', (val, num) => {
-      if(val.length <= num) return true;
+    this.create('max:num|Value max - {{num}}', function(val, field, num){
+      if(field.getValidate('number').length){
+        if(parseFloat(val) <= parseFloat(num)) return true;
+      } else if(val.length <= num) return true;
       return false;
-    })
+    }, true)
     // 字符串最小的长度
-    this.create('min:num|Value length min - {{num}}', (val, num) => {
-      if(val.length >= num) return true;
+    this.create('min:num|Value min - {{num}}', function(val, field, num){
+      if(field.getValidate('number').length && parseFloat(val) >= parseFloat(num)){
+        return true;
+      } else if(val.length >= num) return true;
       return false;
-    })
+    }, true)
     // 是否包含
     this.create('include:*|Value exists {{*}}', (val, ...arr) => {
       for(let i = 0; i < arr.length; i++){
@@ -213,7 +235,7 @@ class Validator{
    * @param {string} 规则键值以及错误说明, 以管道符分隔，例子: key|error_info
    * @param {function} 验证函数，给一个形参val为字段的值，验证成功返回true，失败反之
    */
-  create(key, fn){
+  create(key, fn, flag = false){
     if(!key){
       console.error("rule name dont't exists");
       return;
@@ -246,7 +268,8 @@ class Validator{
     this.validates[name] = {
       errorInfo,
       fn,
-      argvs
+      argvs,
+      flag
     };
   }
 

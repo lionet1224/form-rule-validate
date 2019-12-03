@@ -104,12 +104,20 @@ flag:
 
 规则器方法有`create`/`setErrorInfo`
 
-* `create(key, callback)` 用于创建规则，key可以通过`|`分隔创建名称以及错误信息，示例: `test|this is a test`，key还可以给`l-validate`中的参数定义名称`test:value`，这样就可以在错误信息中，通过`{{value}}`来动态修改错误信息。
+* `create(key, callback, [flag])` 用于创建规则，key可以通过`|`分隔创建名称以及错误信息，示例: `test|this is a test`，key还可以给`l-validate`中的参数定义名称`test:value`，这样就可以在错误信息中，通过`{{value}}`来动态修改错误信息。flag默认为false，如果为true将会在callback第二个参数中注入字段对象
 * `setErrorInfo(key, info)` 修改已有规则的错误信息
 
 
 
+# 默认规则
 
+* require 必须有值，这个值可以为空字符串`"    "`但是不能为`""`
+* filled 值不能为空字符串
+* min:num 字符串最小长度
+* max:num 字符串最大长度
+* number 值需为数字
+* include:num,num,num 值需是所有num中的一个
+* dbpassword 和password关联，是否为相同的值
 
 
 

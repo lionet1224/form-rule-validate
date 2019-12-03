@@ -16,6 +16,8 @@
 
   var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
+  function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
+
   function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
   var STARTENDSPACE = /(^\s*)|(\s*$)/g;
@@ -95,20 +97,36 @@
     }, {
       key: 'validate',
       value: function validate() {
+        var _this3 = this;
+
         // 报错信息
         var errors = {};
         for (var key in this.data) {
           var field = this.data[key];
-          for (var i = 0; i < field.validate.length; i++) {
-            var _name = field.validate[i];
-            var f = this.validator.validates[_name];
+
+          var _loop = function (i) {
+            var name = field.validate[i];
+            var f = _this3.validator.validates[name[0]];
             if (f) {
-              var v = f.fn(field.$dom.value);
+              var v = f.fn.apply(_this3, [field.$dom.value].concat(_toConsumableArray(name[1])));
               if (!v) {
                 !errors[field.name] && (errors[field.name] = []);
+                if (name[1].length) {
+                  if (f.argvs[0] == '*') {
+                    f.errorInfo = f.errorInfo.replace('{{*}}', name[1].join(','));
+                  } else {
+                    name[1].map(function (item, i) {
+                      f.errorInfo = f.errorInfo.replace('{{' + f.argvs[i] + '}}', item);
+                    });
+                  }
+                }
                 errors[field.name].push(f.errorInfo || "no error info");
               }
             }
+          };
+
+          for (var i = 0; i < field.validate.length; i++) {
+            _loop(i);
           }
         }
 
@@ -154,22 +172,22 @@
     }, {
       key: 'get',
       value: function get(key) {
-        var _this3 = this;
+        var _this4 = this;
 
         if (key) {
           return this.data[key].$dom.value;
         } else {
-          var _ret = (function () {
+          var _ret2 = (function () {
             var data = {};
-            Object.keys(_this3.data).map(function (key) {
-              data[key] = _this3.data[key].$dom.value;
+            Object.keys(_this4.data).map(function (key) {
+              data[key] = _this4.data[key].$dom.value;
             });
             return {
               v: data
             };
           })();
 
-          if (typeof _ret === 'object') return _ret.v;
+          if (typeof _ret2 === 'object') return _ret2.v;
         }
       }
     }]);
@@ -204,6 +222,12 @@
         });
         this.validate = arr.filter(function (i) {
           return i.length;
+        }).map(function (item) {
+          var arr = item.split(':');
+          var result = [null, []];
+          result[0] = arr[0];
+          arr[1] && (result[1] = arr[1].split(','));
+          return result;
         });
       }
     }]);
@@ -243,11 +267,37 @@
           if (val.length > 0 && !isNaN(val)) return true;
           return false;
         });
+        // 字符串最大的长度
+        this.create('max:num|Value length max - {{num}}', function (val, num) {
+          if (val.length <= num) return true;
+          return false;
+        });
+        // 字符串最小的长度
+        this.create('min:num|Value length min - {{num}}', function (val, num) {
+          if (val.length >= num) return true;
+          return false;
+        });
+        // 是否包含
+        this.create('include:*|Value exists {{*}}', function (val) {
+          for (var _len = arguments.length, arr = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+            arr[_key - 1] = arguments[_key];
+          }
+
+          for (var i = 0; i < arr.length; i++) {
+            if (arr[i] == val) return true;
+          }
+          return false;
+        });
+        // 确认密码
+        this.create('dbpassword|Password mismatch', function (val) {
+          if (this.get('password') == val) return true;
+          return false;
+        });
       }
 
       /**
        * 创建一条规则
-       * @param {string} 规则键值以及错误说明, 以管道符分隔，例子: test|test
+       * @param {string} 规则键值以及错误说明, 以管道符分隔，例子: key|error_info
        * @param {function} 验证函数，给一个形参val为字段的值，验证成功返回true，失败反之
        */
     }, {
@@ -268,15 +318,27 @@
         // 错误说明
         var errorInfo = keyArr[1];
 
+        // 键值有可能有参数
+        var argv = name.split(':'),
+            argvs = [];
+        if (argv[1]) {
+          name = argv[0];
+          argvs = argv[1].split(',').map(function (i) {
+            return i.replace(STARTENDSPACE, '');
+          });
+        }
+
         // 判断是否存在这条规则
         if (this.validates[name]) {
           console.error('create ' + name + ' fail, this a validate exists');
-          return;
+          // 默认覆盖
+          // return;
         }
 
         this.validates[name] = {
           errorInfo: errorInfo,
-          fn: fn
+          fn: fn,
+          argvs: argvs
         };
       }
 

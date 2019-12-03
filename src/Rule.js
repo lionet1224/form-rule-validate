@@ -61,11 +61,20 @@ class Rule{
       let field = this.data[key];
       for(let i = 0; i < field.validate.length; i++){
         let name = field.validate[i];
-        let f = this.validator.validates[name];
+        let f = this.validator.validates[name[0]];
         if(f){
-          let v = f.fn(field.$dom.value);
+          let v = f.fn.apply(this, [field.$dom.value, ...name[1]]);
           if(!v){
             !errors[field.name] && (errors[field.name] = []);
+            if(name[1].length){
+              if(f.argvs[0] == '*'){
+                f.errorInfo = f.errorInfo.replace('{{*}}', name[1].join(','));
+              } else {
+                name[1].map((item, i) => {
+                  f.errorInfo = f.errorInfo.replace(`{{${f.argvs[i]}}}`, item);
+                })
+              }
+            }
             errors[field.name].push(f.errorInfo || "no error info");
           }
         }
@@ -135,7 +144,13 @@ class Field{
    */
   loadValidate(v){
     let arr = v.split('|').map(item => item.replace(STARTENDSPACE, ''));
-    this.validate = arr.filter(i => i.length);
+    this.validate = arr.filter(i => i.length).map(item => {
+      let arr = item.split(':');
+      let result = [null, []];
+      result[0] = arr[0];
+      arr[1] && (result[1] = arr[1].split(','));
+      return result;
+    });
   }
 }
 
@@ -169,11 +184,33 @@ class Validator{
       if(val.length > 0 && !isNaN(val)) return true;
       return false;
     })
+    // 字符串最大的长度
+    this.create('max:num|Value length max - {{num}}', (val, num) => {
+      if(val.length <= num) return true;
+      return false;
+    })
+    // 字符串最小的长度
+    this.create('min:num|Value length min - {{num}}', (val, num) => {
+      if(val.length >= num) return true;
+      return false;
+    })
+    // 是否包含
+    this.create('include:*|Value exists {{*}}', (val, ...arr) => {
+      for(let i = 0; i < arr.length; i++){
+        if(arr[i] == val) return true;
+      }
+      return false;
+    })
+    // 确认密码
+    this.create('dbpassword|Password mismatch', function(val){
+      if(this.get('password') == val) return true;
+      return false;
+    })
   }
 
   /**
    * 创建一条规则
-   * @param {string} 规则键值以及错误说明, 以管道符分隔，例子: test|test
+   * @param {string} 规则键值以及错误说明, 以管道符分隔，例子: key|error_info
    * @param {function} 验证函数，给一个形参val为字段的值，验证成功返回true，失败反之
    */
   create(key, fn){
@@ -192,15 +229,24 @@ class Validator{
     // 错误说明
     let errorInfo = keyArr[1];
 
+    // 键值有可能有参数
+    let argv = name.split(':'), argvs = [];
+    if(argv[1]){
+      name = argv[0];
+      argvs = argv[1].split(',').map(i => i.replace(STARTENDSPACE, ''));
+    }
+
     // 判断是否存在这条规则
     if(this.validates[name]) {
       console.error(`create ${name} fail, this a validate exists`);
-      return;
+      // 默认覆盖
+      // return;
     }
 
     this.validates[name] = {
       errorInfo,
-      fn
+      fn,
+      argvs
     };
   }
 

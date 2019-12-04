@@ -27,7 +27,7 @@
         name="number" 
         l-validate=
           "required
-          |min:1,3,4
+          |min:1
           |max:5
           |number
           |include:1,3,4,5,6,7

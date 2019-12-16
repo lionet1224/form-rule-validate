@@ -1,16 +1,20 @@
 # Rule - 快速处理表单数据
 
-从零造一个快速验证表单数据的轮子。
+闲来无事，就想造轮子~
 
-目前实现的功能有：
+这个轮子主要的目的就是脱离复杂冗余的表单验证，拥抱新世界，咳咳。
 
-- [x] 自定义规则
-- [x] 简单明确的数据匹配
-- [x] 可以配置的错误信息
-- [x] 快捷获取表单数据
-- [x] 快速验证数据
+主要的写法是参考了laravel的validator类。
 
+# 思路
 
+采用了3个类来分别处理不同的内容，比如Rule类，Field类，以及Validator类。
+
+其中Rule是入口，Field是保存字段数据，Validator是保存规则的。
+
+一开始，Validator会自动加载一些规则。
+
+咳，算了，不说了，没啥好说的，到时候直接在下面的github里看代码吧~
 
 # 使用
 
@@ -119,15 +123,8 @@ flag:
 * include:num,num,num 值需是所有num中的一个
 * dbpassword 和password关联，是否为相同的值
 
+# 最后放一个github地址
 
+https://github.com/jialeliang/form-rule-validate
 
-
-
-
-
-
-
-
-
-
-
+欢迎各位大佬批评。
